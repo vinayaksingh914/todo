@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo App</title>
+</head>
+<body>
+
+<h2>Todo App</h2>
+
+<input type="text" id="task" placeholder="Enter task">
+<button onclick="addTodo()">Add</button>
+
+<ul id="list"></ul>
+
+<button onclick="logout()">Logout</button>
+
+<script>
+const token = localStorage.getItem("token");
+
+// Load todos
+async function loadTodos() {
+  const res = await fetch("http://localhost:5000/todos", {
+    headers: {
+      "Authorization": token
+    }
+  });
+
+  const data = await res.json();
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  data.forEach(todo => {
+    const li = document.createElement("li");
+    li.innerText = todo.task;
+
+    // Delete button
+    const delBtn = document.createElement("button");
+    delBtn.innerText = "Delete";
+    delBtn.onclick = () => deleteTodo(todo.id);
+
+    li.appendChild(delBtn);
+    list.appendChild(li);
+
+    //Update button
+    const updateBtn = document.createElement("button");
+    updateBtn.innerText = "Update";
+    updateBtn.onclick = () => {
+      const newTask = prompt("Enter new task", todo.task);
+      if (newTask) {
+        updateTodo(todo.id, newTask);
+      }
+    };
+
+    li.appendChild(updateBtn);
+    list.appendChild(li);
+  });
+}
+
+// Add todo
+async function addTodo() {
+  const task = document.getElementById("task").value;
+
+  await fetch("http://localhost:5000/todos", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": token
+    },
+    body: JSON.stringify({ task })
+  });
+
+  loadTodos();
+}
+
+// Delete todo
+async function deleteTodo(id) {
+  await fetch(`http://localhost:5000/todos/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Authorization": token
+    }
+  });
+
+  loadTodos();
+}
+
+//Update todo
+async function updateTodo(id, task) {
+  await fetch(`http://localhost:5000/todos/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": token,
+      "keys": "value"
+    },
+    body: JSON.stringify({ task })
+  });
+
+  loadTodos();
+}
+
+// Logout
+function logout() {
+  localStorage.removeItem("token");
+  window.location.href = "login.html";
+}
+
+// Initial load
+loadTodos();
+</script>
+
+</body>
+</html>
